@@ -1,6 +1,6 @@
 # Azure Code Signing for plugin developers
 
-🌠 Latest update: Mar 10, 2024.
+🌠 Latest update: Mar 28, 2024.
 
 This guide covers the steps necessary to set up a modern code signing flow using Azure Code Signing on Microsoft Windows, for example as part of a automated build or CI process. It is primarily meant for developers that are working on audio plugins and apps and covers a few specifics on things such as AAX code signing, with the hope that it will be useful for some.
 
@@ -150,16 +150,9 @@ Make sure that you have installed the minimum required dependencies:
 
 * Windows 10 SDK 10.0.19041 or higher (or Windows 11 SDK). This includes the minimum required version of `signtool.exe`.
 * [.NET 6.0 runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-6.0.9-windows-x64-installer). If this is not installed, signtool will fail silently without output.
+* The [Microsoft Trusted Signing Client](https://www.nuget.org/packages/Microsoft.Trusted.Signing.Client) containing the Dlib for signtool. You can either use use `nuget` to install this package, or download the package manually and open it as a zip archive. Install or extract this package to a known directory of your choice.
 
----
-
-Download the Azure Code Signing Dlib for signtool. It should have been provided by Microsoft either as part of a quick start guide, or it will be provided as soon as ACS enters public use.
-Note that it should be extracted to a specific directory mentioned in the instructions.
-We will replace this with the appropriate public links as soon as ACS is available for public use.
-
----
-
-After setting up the Dlib, we need to create a metadata configuration JSON file inside the Dlib's installation directory:
+After installing the above dependencies, we need to create a metadata configuration JSON file inside the directory of the Microsoft Trusted Signing Client.
 
 * Create a `metadata.json` file with the following contents (replace details accordingly):
 	```
