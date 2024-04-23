@@ -1,10 +1,10 @@
-# Azure Code Signing for plugin developers
+# Azure Trusted Signing for plugin developers
 
 🌠 Latest update: Apr 23, 2024.
 
-This guide covers the steps necessary to set up a modern code signing flow using Azure Code Signing on Microsoft Windows, for example as part of a automated build or CI process. It is primarily meant for developers that are working on audio plugins and apps and covers a few specifics on things such as AAX code signing, with the hope that it will be useful for some.
+This guide covers the steps necessary to set up a modern code signing flow using Azure Trusted Signing on Microsoft Windows, for example as part of a automated build or CI process. It is primarily meant for developers that are working on audio plugins and apps and covers a few specifics on things such as AAX code signing, with the hope that it will be useful for some.
 
-Azure Code Signing is a new all-in-one code signing service for Microsoft Azure which, at the time of writing, is still in a closed preview phase but expected to launch somewhere in 2024 to the general public. We recommend this service because it is provided by Microsoft itself and as such all tools come directly from Microsoft, removing the need for any third party tools to make code signing work. All in all, our experience with it has been very good.
+Azure Trusted Signing is a new all-in-one code signing service for Microsoft Azure which, at the time of writing, is still in a closed preview phase but expected to launch somewhere in 2024 to the general public. We recommend this service because it is provided by Microsoft itself and as such all tools come directly from Microsoft, removing the need for any third party tools to make code signing work. All in all, our experience with it has been very good.
 
 We would like to share this guidelines, so any developers can already make preparations to migrate to this service in due time, or perhaps already have a go if they have already been enrolled in the Azure preview program and have access to ACS today.
 
@@ -16,14 +16,14 @@ Normally one would use `signtool.exe` with a local private key file beloning to 
 
 Fortunately, there are currently at least two viable alternatives out there that will be covered in this guide.
 
-1. Azure Code Signing - a new Azure service aimed specifically at code signing, which we can recommend.
+1. Azure Trusted Signing - a new Azure service aimed specifically at code signing, which we can recommend.
 2. Azure Key Vault - an Azure service that provides a remote HSM.
 
-We will cover the use of Azure Code Signing in this guide.
+We will cover the use of Azure Trusted Signing in this guide.
 
-## 2. Azure Code Signing (ACS)
+## 2. Azure Trusted Signing
 
-The way Azure Code Signing works is by extending `signtool.exe`. This is a known tool for code signing which is included in the Windows SDK. The connection to Azure is used to create and use an ad hoc certificate which is then used to sign a binary. 
+The way Azure Trusted Signing works is by extending `signtool.exe`. This is a known tool for code signing which is included in the Windows SDK. The connection to Azure is used to create and use an ad hoc certificate which is then used to sign a binary. 
 
 These certificates are issued by Microsoft. In fact, Microsoft itself acts as a certificate authority with a root certificate chain already preinstalled in modern versions of Microsoft Windows.
 
@@ -33,17 +33,17 @@ In any case, `signtool.exe` automatically and transparently takes care of issuin
 
 ### 2.1. Pricing
 
-The pricing plan of Azure Code Signing is currently unknown and it is expected that this will be revealed somewhere in 2024. We expect the pricing to be reasonable, as it concerns a fundamental service for many Microsoft Windows developers.
+The pricing plan of Azure Trusted Signing is currently unknown and it is expected that this will be revealed somewhere in 2024. We expect the pricing to be reasonable, as it concerns a fundamental service for many Microsoft Windows developers.
 
 ### 2.2. Setting up ACS on Microsoft Azure
 
-The following assumes that you have access to the Azure Code Signing service in your Microsoft Azure account. These steps will involve using the Microsoft Azure web portal to configure things. It will only be necessary to configure these things once, and you should be good to go afterwards.
+The following assumes that you have access to the Azure Trusted Signing service in your Microsoft Azure account. These steps will involve using the Microsoft Azure web portal to configure things. It will only be necessary to configure these things once, and you should be good to go afterwards.
 
 #### 2.2.1. Creating an ACS resource
 
 First, create an ACS resource:
 
-* Go to [Code Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts)
+* Go to [Trusted Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts)
 * Click "Create". Fill in the details, pick one of the following regions:
 	* East US (https://eus.codesigning.azure.net)
 	* West US (https://wus.codesigning.azure.net)
@@ -56,10 +56,10 @@ First, create an ACS resource:
 
 Now that we have an ACS resource, we need to grant administrative access in order to access it:
 
-* Open the Code Signing resource.
+* Open the Trusted Signing resource.
 * Go to "Access control (IAM)" (left menu).
 * Click "Add" and "Add role assignment" (top).
-* Select "Code Signing Identity Verifier". Next.
+* Select "Trusted Signing Identity Verifier". Next.
 * Type in and select your current user account.
 * Keep clicking "Review + assign" until done.
 
@@ -72,24 +72,25 @@ We will now create a code signing app, which we will be able to use with any of 
 * Name: codesigning-app (or anything else)
 * Who can use this application or access this API?: Accounts in this organizational directory only (Default Directory only - Single tenant)
 * Redirect URI: (leave as is)
-* Click "Create".
+* Click "Register".
 * Click on the app resource you've just created.
-* Note down the "Application (client) ID" for later usage.
+* Note down the "Application (client) ID" for later usage with signtool.
 * Go to "Certificates & secrets" (left menu).
 * Click "Client secrets" (top).
 * Click "New client secret".
 * Set "Expires" to the highest date possible.
 * Click "Add".
-* Note down the "Value", this is the secret for later usage.
+* Note down the "Value", this is the secret for later usage with signtool.
 
 #### 2.2.4. Granting code signing app permissions
 
 We will now grant our code signing app the right permissions:
 
-* Open the Code Signing resource.
+* Open the Trusted Signing resource.
 * Go to "Access control (IAM)" (left menu).
 * Click "Add" and "Add role assignment" (top).
-* Select "Code Signing Certificate Profile Signer". Next.
+* Select "Trusted Signing Certificate Profile Signer". Next.
+* Leave "User, Group or Service principal" selected. Click on "+ Select Members".
 * Type in and select your app name (e.g. codesigning-app).
 * Keep clicking "Review + assign" until done.
 
@@ -98,18 +99,18 @@ We will now grant our code signing app the right permissions:
 Now that the ACS basics have been set up, we need to set up ACS so we can issue certificates. One requirements for that is that your personal or company identity has been validated with Microsoft Azure.
 Let's start that process:
 
-* Open the Code Signing resource.
+* Open the Trusted Signing resource.
 * Go to "Identity validation" (left menu).
 * Click "New" and "Public Trust" (top).
-* Fill in the details. Note that Primary and Secondary E-mail(s) will not be published in any certificate.
+* Fill in the details. Note that Primary and Secondary E-mail(s) will not be published in any certificate. You may need a DUNS number as well.
 
-Your mileage may vary, but expect this to take at least a day to complete as it is a one-time verification that concerns your Microsoft Azure account.
+Your mileage may vary, but expect the validation to take at least a day to be confirmed as it is a one-time verification that concerns your Microsoft Azure account.
 
 #### 2.2.6. Create certificate profile
 
 We now need to create a certificate profile, which we can use for code signing:
 
-* Open the Code Signing resource.
+* Open the Trusted Signing resource.
 * Go to "Certificate profiles" (left menu).
 * Click "Create" and "Public Trust" (top).
 * Fill in a name and select the "Verified CN and O" appropriately (will appear when the identity validation process is done).
@@ -119,7 +120,7 @@ The certificate should now be ready to be used with signing.
 
 Luckely, our setup on Microsoft Azure should now be complete.
 
-## 2.3. Setting up ACS for code signing
+## 2.3. Setting up Azure Trusted Signing for code signing
 
 Now that ACS has been configured on Microsoft Azure, we can set up the code signing tools on our local development or automated build machine.
 The following steps assume that you have access to a machine running a recent version of Microsoft Windows, and you are able to execute commands in the command prompt.
@@ -152,32 +153,36 @@ Make sure that you have installed the minimum required dependencies:
 * [.NET 6.0 runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-6.0.9-windows-x64-installer). If this is not installed, signtool will fail silently without output.
 * The [Microsoft Trusted Signing Client](https://www.nuget.org/packages/Microsoft.Trusted.Signing.Client) containing the Dlib for signtool. You can either use use `nuget` to install this package, or download the package manually and open it as a zip archive. Install or extract this package to a known directory of your choice.
 
+If you use NuGet, the following PowerShell command may be useful to you:
+```shell
+Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/latest/nuget.exe -OutFile .\nuget.exe
+.\nuget.exe install Microsoft.Trusted.Signing.Client
+```
+
 After installing the above dependencies, we need to create a metadata configuration JSON file inside the directory of the Microsoft Trusted Signing Client.
 
 * Create a `metadata.json` file with the following contents (replace details accordingly):
 	```
 	{
-		"Endpoint": "<Code Signing Account Endpoint>", 
+		"Endpoint": "<Code Signing Account Endpoint URL>", 
 		"CodeSigningAccountName": "<Code Signing Account Name>", 
-		"CertificateProfileName": "<Certificate Profile Name>", 
-		"CorrelationId": "<Optional CorrelationId*>" 
+		"CertificateProfileName": "<Certificate Profile Name>"
 	} 
 	```
-	* Endpoint: choose according to the endpoint you've chosen for the Azure Code Signing:
+	* Endpoint URL: choose according to the endpoint you've chosen for the Azure Trusted Signing:
 		* East US (https://eus.codesigning.azure.net)
 		* West US (https://wus.codesigning.azure.net)
 		* West Central US (https://wcus.codesigning.azure.net)
 		* West US 2 (https://wus2.codesigning.azure.net)
 		* North Europe (https://neu.codesigning.azure.net)  
 		* West Europe (https://weu.codesigning.azure.net)
-	* CorrelationId: an optional string to identify these requests, not really necessary.
 
 To help along with the configuration of the signtool, especially for automated build systems, we will also add some environment variables to the system. Note that these environment variables are not necessary, but if you choose not to use them, replace the use of them in any of the commands elsewhere in this guide.
 
-* Make sure the following environment variables are set accordingly to use with the code signing app you've created earlier (e.g. codesigning-app):
-	* `AZURE_TENANT_ID`: The Microsoft Entra tenant (directory) ID. Can be found in Microsoft Entra ID.
-	* `AZURE_CLIENT_ID`: The client (application) ID of an App Registration in the tenant.
-	* `AZURE_CLIENT_SECRET`: A client secret ("value") that was generated for the App Registration.
+* Make sure the following environment variables are set accordingly to use with the Trusted Signing app you've created earlier (e.g. codesigning-app):
+	* `AZURE_TENANT_ID`: The Microsoft Entra tenant (directory) ID. Use the value you noted down earlier. Can also be found in Microsoft Entra ID.
+	* `AZURE_CLIENT_ID`: The client (application) ID of an App Registration in the tenant. Use the value you noted down earlier.
+	* `AZURE_CLIENT_SECRET`: A client secret ("value") that was generated for the App Registration. Use the value you noted down earlier.
 * Create an environment variable `ACS_DLIB` that points to the exact path of the `Azure.CodeSigning.Dlib.dll` in the archive that was extracted above.
 * Create an environment variable `ACS_JSON` that points to the exact path of the `metadata.json` file that was created above.
 
@@ -200,7 +205,7 @@ signtool.exe sign /v /debug /fd SHA256 /tr "http://timestamp.acs.microsoft.com" 
 
 ### 2.3.4. Using `signtool.exe` with AAX `wraptool.exe`
 
-Since PACE Eden SDK's wraptool utility uses signtool.exe as well, and ProTools on Windows expects .aax plugins to be signed with a whitelisted Microsoft certificate authority, wraptool needs to be adjusted in order to use the Azure Code Signing as well.
+Since PACE Eden SDK's wraptool utility uses signtool.exe as well, and ProTools on Windows expects .aax plugins to be signed with a whitelisted Microsoft certificate authority, wraptool needs to be adjusted in order to use the Azure Trusted Signing as well.
 
 Normally wraptool relies on either a certificate file and password (no longer possible due to HSM) or a sign id (HSM), with no apparent support for any other tools or options. Luckely wraptool just simply runs signtool with a bunch of arguments and the signtool location can even be specified. We use a signtool wrapper instead that injects all the necessary arguments, and this seems to work.
 
@@ -240,7 +245,7 @@ Now proceed by creating the wrapper files:
 	:: KDSP Signtool wrapper for Eden SDK / AAX wraptool
 	::
 	:: wraptool invokes signtool but makes a lot of assumptions about how we're going to sign
-	:: which are incompatible with Azure Code Signing.
+	:: which are incompatible with Azure Trusted Signing.
 	::
 	:: This tool removes all its arguments and replaces it with the correct or necessary ones.
 	:: Please adjust accordingly if necessary.
@@ -306,7 +311,7 @@ You should now be set up to code sign AAX using ACS.
 
 ## 3. Final words
 
-With any luck, you should now have Azure Code Signing working with `signtool.exe` to sign application binaries, as well as with `wraptool.exe` to sign AAX binaries.
+With any luck, you should now have Azure Trusted Signing working with `signtool.exe` to sign application binaries, as well as with `wraptool.exe` to sign AAX binaries.
 
 Happy hacking!
 
