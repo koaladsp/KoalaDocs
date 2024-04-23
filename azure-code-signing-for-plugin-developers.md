@@ -1,6 +1,6 @@
 # Azure Code Signing for plugin developers
 
-🌠 Latest update: Mar 28, 2024.
+🌠 Latest update: Apr 23, 2024.
 
 This guide covers the steps necessary to set up a modern code signing flow using Azure Code Signing on Microsoft Windows, for example as part of a automated build or CI process. It is primarily meant for developers that are working on audio plugins and apps and covers a few specifics on things such as AAX code signing, with the hope that it will be useful for some.
 
@@ -43,7 +43,7 @@ The following assumes that you have access to the Azure Code Signing service in 
 
 First, create an ACS resource:
 
-* Go to [Code Signing Accounts](https://portal.azure.com/?feature.customportal=false&Microsoft_Azure_CodeSigning_assettypeoptions=%7B%22CodeSigningAccounts%22%3A%7B%22options%22%3A%22%22%7D%7D&microsoft_azure_codesigning=true#view/HubsExtension/BrowseResource/resourceType/Microsoft.CodeSigning%2Fcodesigningaccounts)
+* Go to [Code Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts)
 * Click "Create". Fill in the details, pick one of the following regions:
 	* East US (https://eus.codesigning.azure.net)
 	* West US (https://wus.codesigning.azure.net)
