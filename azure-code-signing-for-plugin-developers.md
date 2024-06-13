@@ -33,7 +33,9 @@ In any case, `signtool.exe` automatically and transparently takes care of issuin
 
 ### 2.1. Pricing
 
-The pricing plan of Azure Trusted Signing is currently unknown and it is expected that this will be revealed somewhere in 2024. We expect the pricing to be reasonable, as it concerns a fundamental service for many Microsoft Windows developers.
+The preliminary pricing plan of Azure Trusted Signing is available here:
+
+https://techcommunity.microsoft.com/t5/security-compliance-and-identity/trusted-signing-is-in-public-preview/ba-p/4103457
 
 ### 2.2. Setting up ACS on Microsoft Azure
 
@@ -103,6 +105,7 @@ Let's start that process:
 * Go to "Identity validation" (left menu).
 * Click "New" and "Public Trust" (top).
 * Fill in the details. Note that Primary and Secondary E-mail(s) will not be published in any certificate. You may need a DUNS number as well.
+* Please be aware that the domain of the email addresses you supply must be owned by you (so use `info@yourwebsite.com` instead of `jon.doe@googlemail.com`. Using a generic email provider will likely cause the validation to fail (without supplying a reason).
 
 Your mileage may vary, but expect the validation to take at least a day to be confirmed as it is a one-time verification that concerns your Microsoft Azure account.
 
