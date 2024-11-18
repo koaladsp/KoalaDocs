@@ -153,7 +153,7 @@ This tool gets its credentials to your Microsoft Azure account either by command
 
 First, make sure that you have installed the minimum required dependencies:
 
-* Windows 10 SDK 10.0.19041 or higher (or Windows 11 SDK). This includes the minimum required version of `signtool.exe`.
+* Windows 11 SDK 10.0.22621.755 or higher. This includes the minimum required version of `signtool.exe`.
 * [.NET 6.0 runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-6.0.9-windows-x64-installer). If this is not installed, signtool will fail silently without output.
 * The [Microsoft Trusted Signing Client](https://www.nuget.org/packages/Microsoft.Trusted.Signing.Client) containing the Dlib for signtool. You can either use use `nuget` to install this package, or download the package manually and open it as a zip archive. Install or extract this package to a known directory of your choice.
 
