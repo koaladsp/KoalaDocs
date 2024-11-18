@@ -289,7 +289,7 @@ Now proceed by creating the utility scripts:
 	set args=%*
 	echo %args%>args.tmp
 	echo Patched signtool: Input arguments: %args%
-	python %root%\aax-signtool.py
+	python "%root%\aax-signtool.py"
 	set /p args=<args.tmp
 	echo Patched signtool: Filtered arguments: %args%
 	set file="%args%"
