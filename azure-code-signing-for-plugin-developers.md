@@ -1,29 +1,29 @@
 # Azure Trusted Signing for plugin developers
 
-🌠 Latest update: Apr 23, 2024.
+🌠 Latest update: Nov 11, 2024.
 
-This guide covers the steps necessary to set up a modern code signing flow using Azure Trusted Signing on Microsoft Windows, for example as part of a automated build or CI process. It is primarily meant for developers that are working on audio plugins and apps and covers a few specifics on things such as AAX code signing, with the hope that it will be useful for some.
+This guide covers the steps necessary to set up a modern code signing flow using Azure Trusted Signing on Microsoft Windows, for example as part of a automated build or CI process. It is primarily meant for developers that are working on audio plugins and apps and covers a few specifics on things such as AAX code signing, PACE wrapped binaries, with the hope that it will be useful for some.
 
-Azure Trusted Signing is a new all-in-one code signing service for Microsoft Azure which, at the time of writing, is still in a closed preview phase but expected to launch somewhere in 2024 to the general public. We recommend this service because it is provided by Microsoft itself and as such all tools come directly from Microsoft, removing the need for any third party tools to make code signing work. All in all, our experience with it has been very good.
+[Azure Trusted Signing](https://azure.microsoft.com/en-us/products/trusted-signing) is a new end-to-end code signing service which is currently available to the general public as part of Microsoft Azure.
 
-We would like to share this guidelines, so any developers can already make preparations to migrate to this service in due time, or perhaps already have a go if they have already been enrolled in the Azure preview program and have access to ACS today.
+We recommend this service because it is provided by Microsoft itself and as such all tools come directly from Microsoft, removing the need for any third party tools to make code signing work, or for any hardware-backed certificate setups. All in all, our experience with it has been very good.
 
 ## 1. Current state of affairs
 
 Since 2022, code signing certificates (EV) for Microsoft Windows are no longer allowed to be derived from "unprotected" private key files. Private keys must be generated securely in a Hardware Security Module (HSM) with FIPS 140-2 or EAL 4+ rating, and thus a HSM is now a necessity for plain old local code signing.
 
-Normally one would use `signtool.exe` with a local private key file beloning to a public-private certificate keypair issued by one of the allowed authorities, but this no longer works without use of a local HSM such as a Yubikey dongle. This can complicate things because you now need either a local HSM, a dedicated shared HSM or remote HSM.
+Normally one would use `signtool.exe` with a local private key file belonging to a public-private certificate keypair issued by one of the allowed authorities, but this no longer works without use of a local HSM such as a Yubikey dongle. This can complicate things because you now need either a local HSM, a dedicated shared HSM or remote HSM.
 
 Fortunately, there are currently at least two viable alternatives out there that will be covered in this guide.
 
 1. Azure Trusted Signing - a new Azure service aimed specifically at code signing, which we can recommend.
 2. Azure Key Vault - an Azure service that provides a remote HSM.
 
-We will cover the use of Azure Trusted Signing in this guide.
+As the Azure Key Vault is a replacement for HSM use cases, will cover the use of the much easier Azure Trusted Signing in this guide instead.
 
 ## 2. Azure Trusted Signing
 
-The way Azure Trusted Signing works is by extending `signtool.exe`. This is a known tool for code signing which is included in the Windows SDK. The connection to Azure is used to create and use an ad hoc certificate which is then used to sign a binary. 
+The way Azure Trusted Signing works is by extending `signtool.exe`. This is a known tool for code signing which is included in the Windows SDK. The connection to Azure is used to create and use an ad hoc certificate which is then used to sign a binary.
 
 These certificates are issued by Microsoft. In fact, Microsoft itself acts as a certificate authority with a root certificate chain already preinstalled in modern versions of Microsoft Windows.
 
@@ -33,7 +33,7 @@ In any case, `signtool.exe` automatically and transparently takes care of issuin
 
 ### 2.1. Pricing
 
-The pricing plan of Azure Trusted Signing is currently unknown and it is expected that this will be revealed somewhere in 2024. We expect the pricing to be reasonable, as it concerns a fundamental service for many Microsoft Windows developers.
+The [pricing plan of Azure Trusted Signing](https://azure.microsoft.com/en-us/pricing/details/trusted-signing/) is based on a reasonable monthly fee with a maximum quota of signatures per month (e.g. 5000 signatures per month) after which a per-signature cost gets activated. There is also a bigger tier if you require much more signatures per month, e.g. if you're running extensive CI systems or such. Typically the smallest tier will probably work for most independent developers.
 
 ### 2.2. Setting up ACS on Microsoft Azure
 
@@ -143,11 +143,15 @@ We now need to create a "service principal" locally to enable our code signing t
 	az ad app permission grant --id cf2ab426-f71a-4b61-bb8a-9e505b85bc2e --api 00000003-0000-0000-c000-000000000000 --scope User.Read
 	```
 
+Note that these commands are only necessary once, in order to configure your system with the right credentials. There is no need to repeat these commands afterwards in case you just want to sign applications. The environment variables later in this guide will serve as a way to provide the necessary credentials instead.
+
 ### 2.3.2. Preparing `signtool.exe`
 
 `signtool.exe` is the known code signing tools distributed by Microsoft with Windows SDKs. It can be used with ACS, which is excellent since it means that it is directly supported by Microsoft itself. In order to make it work however, it needs to be extended by means of a Dlib file.
 
-Make sure that you have installed the minimum required dependencies:
+This tool gets its credentials to your Microsoft Azure account either by command-line arguments, or by environment variables such as `AZURE_TENANT_ID`, `AZURE_CLIENT_ID` and `AZURE_CLIENT_SECRET` as we will use further ahead in this guide.
+
+First, make sure that you have installed the minimum required dependencies:
 
 * Windows 10 SDK 10.0.19041 or higher (or Windows 11 SDK). This includes the minimum required version of `signtool.exe`.
 * [.NET 6.0 runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-6.0.9-windows-x64-installer). If this is not installed, signtool will fail silently without output.
@@ -159,7 +163,7 @@ Invoke-WebRequest -Uri https://dist.nuget.org/win-x86-commandline/latest/nuget.e
 .\nuget.exe install Microsoft.Trusted.Signing.Client
 ```
 
-After installing the above dependencies, we need to create a metadata configuration JSON file inside the directory of the Microsoft Trusted Signing Client.
+After installing the above dependencies, we need to create a metadata configuration JSON file inside the directory of the Microsoft Trusted Signing Client in order to make the tool work with Microsoft Azure Trusted Signing.
 
 * Create a `metadata.json` file with the following contents (replace details accordingly):
 	```
@@ -177,14 +181,20 @@ After installing the above dependencies, we need to create a metadata configurat
 		* North Europe (https://neu.codesigning.azure.net)  
 		* West Europe (https://weu.codesigning.azure.net)
 
-To help along with the configuration of the signtool, especially for automated build systems, we will also add some environment variables to the system. Note that these environment variables are not necessary, but if you choose not to use them, replace the use of them in any of the commands elsewhere in this guide.
+To help along with the configuration of the signtool, especially for automated build systems, we also require a number of environment variables to be set. These can be added either to the system globally, or can be set in your own scripts calling the sign tool on your own accord.
 
-* Make sure the following environment variables are set accordingly to use with the Trusted Signing app you've created earlier (e.g. codesigning-app):
+First, the sign tool uses a number of environment variables as credentials to authenticate with your Microsoft Azure account. Make sure the following environment variables are set accordingly to use with the Trusted Signing app you've created earlier (e.g. codesigning-app):
+
 	* `AZURE_TENANT_ID`: The Microsoft Entra tenant (directory) ID. Use the value you noted down earlier. Can also be found in Microsoft Entra ID.
 	* `AZURE_CLIENT_ID`: The client (application) ID of an App Registration in the tenant. Use the value you noted down earlier.
 	* `AZURE_CLIENT_SECRET`: A client secret ("value") that was generated for the App Registration. Use the value you noted down earlier.
-* Create an environment variable `ACS_DLIB` that points to the exact path of the `Azure.CodeSigning.Dlib.dll` in the archive that was extracted above.
-* Create an environment variable `ACS_JSON` that points to the exact path of the `metadata.json` file that was created above.
+
+In addition, the commands and scripts specifically in this guide use a few environment variables of their own:
+
+* `ACS_DLIB` should point to the exact filesystem path of the `Azure.CodeSigning.Dlib.dll` in the archive that was extracted above.
+* `ACS_JSON` should point to the exact filesystem path of the `metadata.json` file that was created above.
+
+Note that these last environment variables are specific to this guide only, and are thus different from the earlier environment variables expected by the signing tool.
 
 ### 2.3.3. Testing `signtool.exe`
 
@@ -205,18 +215,22 @@ signtool.exe sign /v /debug /fd SHA256 /tr "http://timestamp.acs.microsoft.com" 
 
 ### 2.3.4. Using `signtool.exe` with AAX `wraptool.exe`
 
-Since PACE Eden SDK's wraptool utility uses signtool.exe as well, and ProTools on Windows expects .aax plugins to be signed with a whitelisted Microsoft certificate authority, wraptool needs to be adjusted in order to use the Azure Trusted Signing as well.
+As of the latest update of this guide, PACE Eden SDK's `wraptool.exe` does not yet support Azure Trusted Signing as an option.
 
-Normally wraptool relies on either a certificate file and password (no longer possible due to HSM) or a sign id (HSM), with no apparent support for any other tools or options. Luckely wraptool just simply runs signtool with a bunch of arguments and the signtool location can even be specified. We use a signtool wrapper instead that injects all the necessary arguments, and this seems to work.
+It is however possible to work around this issue by modifying the wrap tool in a way that allows for Azure Trusted Signing to work, this is because the wrap tool utility also uses Microsoft's `signtool.exe` internally, and ProTools on Windows expects binaries to be signed with a whitelisted Microsoft certificate authority.
 
-This section presents a stop-gap workaround while wraptools remains incompatible. It is by no means ideal but it works.
+Normally the wrap tool relies on either a certificate file and password (no longer possible due to HSM) or a sign id (HSM) to passed in by the developer, with no apparent support for any other tools or options. However, we can use utility scripts and let the wrap tool use these instead to injects all the necessary arguments for Azure Trusted Signing to work.
 
-* Make sure you have installed Python 3 as the batch file below relies on its use.
-* Choose a directory on the system that is accessible and where you can place the wrappers for use with `wraptool.exe`.
+This section presents a stop-gap workaround while wraptools remains unsupported by PACE. It is by no means ideal but it works.
 
-Now proceed by creating the wrapper files:
+In order for this solution to work, make sure:
 
-* Create a python file called `aax-signtool.py` with the following contents in a directory of your choice:
+* Python 3 has been installed on the system. This is because the utility script below relies on it.
+* Choose a directory on the system that is accessible and where you can place the utility scripts.
+
+Now proceed by creating the utility scripts:
+
+1. Create a python file called `aax-signtool.py` with the following contents:
 	```python
 	import sys
 	import re
@@ -238,7 +252,7 @@ Now proceed by creating the wrapper files:
 	exit(1)
 	```
 
-* Create a batch file called `aax-signtool.bat` with the following contents in a directory of your choice:
+2. Create a batch file called `aax-signtool.bat` with the following contents in a directory of your choice:
 	```dos
 	@echo off
 	
@@ -298,20 +312,29 @@ Now proceed by creating the wrapper files:
 	echo Patched signtool: Success
 	```
 
-You should now be able to run `wraptool.exe` such that it invokes `signtool.exe`, making use of ACS. In order to this, you will need to pass the following arguments, e.g.:
+If you're curious as to what these utility scripts do, the purpose of these two scripts is:
+
+	1. To hook the PACE wrap tool's call to Microsoft's sign tool, by acting as a proxy to the actual sign tool.
+	2. To inject the proper command-line arguments to Microsoft's sign tool, along with the original arguments from the PACE wrap tool, so that Azure Trusted Signing will be used instead of the regular HSM code signing.
+	3. To sanitize the arguments that the PACE wrap tool is passing to the Microsoft sign tool, so things don't break. This is specifically the purpose of the Python script, and is not ideal but necessary as this step is very complicated to do with batch scripting. Another option would've been a single Python script but it is unclear if the PACE wrap tool would've accepted this.
+
+In any case, you should now be able to run `wraptool.exe` such that it invokes `signtool.exe` making use of Azure Trusted Signing. In order to this, you will need to pass the following arguments, e.g.:
 
 ```dos
 wraptool.exe sign --signtool aax-signtool.bat --signid 1 --verbose --installedbinaries --account ... --password ... --wcguid ... --in ...
 ```
 
 Where `aax-signtool.bat` should point its absolute path inside your chosen directory, such as `C:\Tools\aax-signtools.bat`.
-You can ignore the `--signid 1` argument, but it is necessary to make wraptool work.
 
-You should now be set up to code sign AAX using ACS.
+You can ignore the `--signid 1` argument, but it is necessary to make wraptool work as it expects this argument to be present (remember, it is still thinking we are using HSM code signing, which we are not). This argument is completely ignored and defused by the actual utility scripts.
+
+You should now be able to code sign and wrap binaries using Azure Trusted Signing. Remember to use `wraptool.exe sign` for code signing AAX plugins, and `wraptool.exe wrap` for wrapping and code signing binaries such as standalone applications.
 
 ## 3. Final words
 
-With any luck, you should now have Azure Trusted Signing working with `signtool.exe` to sign application binaries, as well as with `wraptool.exe` to sign AAX binaries.
+With any luck, you should now have Azure Trusted Signing working with `signtool.exe` to sign application binaries, as well as with `wraptool.exe` to wrap and/or sign binaries.
+
+Your mileage may vary depending on your situation, but the above instructions have been shown to been helpful for a lot of people so far!
 
 Happy hacking!
 
