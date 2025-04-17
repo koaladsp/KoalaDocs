@@ -118,7 +118,7 @@ We now need to create a certificate profile, which we can use for code signing:
 
 The certificate should now be ready to be used with signing.
 
-Luckely, our setup on Microsoft Azure should now be complete.
+Luckily, our setup on Microsoft Azure should now be complete.
 
 ## 2.3. Setting up Azure Trusted Signing for code signing
 
