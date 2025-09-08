@@ -203,7 +203,7 @@ Finally, make sure the .NET 6.0 runtime is installed:
 
 * [.NET 6.0 runtime](https://dotnet.microsoft.com/en-us/download/dotnet/thank-you/runtime-6.0.9-windows-x64-installer). If this is not installed, signtool will fail silently without output.
 
-### 2.3.2. Configuring signtool
+### 2.3.3. Configuring signtool
 
 We now need to create a metadata configuration JSON file to make the signtool work with Azure Trusted Signing. This JSON file can be placed anywhere you like.
 
@@ -252,7 +252,7 @@ set ACS_DLIB=C:\sign\Microsoft.Trusted.Signing.Client.1.0.95\bin\x64\Azure.CodeS
 set ACS_JSON=C:\sign\metadata.json
 ```
 
-### 2.3.3. Testing `signtool.exe`
+### 2.3.4. Testing `signtool.exe`
 
 We now need to make sure that `signtool.exe` is working and capable of using Azure Trusted Signing to sign executables, before doing anything else.
 
