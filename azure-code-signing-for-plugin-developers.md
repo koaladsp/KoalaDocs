@@ -1,6 +1,6 @@
 # Azure Trusted Signing for plugin developers
 
-🌠 Latest update: Sep 8, 2025 by [Cecill Etheredge](https://github.com/ijsf).
+🌠 Latest update: Dec 4, 2025 by [Cecill Etheredge](https://github.com/ijsf).
 
 This guide covers the steps necessary to set up a modern code signing flow using Azure Trusted Signing on Microsoft Windows, for example as part of a automated build or CI process. It is primarily meant for developers that are working on audio plugins and apps and covers a few specifics on things such as AAX code signing, PACE wrapped binaries, with the hope that it will be useful for some.
 
@@ -101,6 +101,7 @@ We will now create a _code signing app_, for which the credentials will be used 
 * Note down the "Value", this is the secret for later usage with signtool.
 
 💡 _Note down the code signing app client ID and client secret, which we will use later in this guide._
+💡 Do not forget that the client secret will expire in a few months or years, depending on what you choose. Take preparations so you can renew the client secret quickly before or on expiration.
 
 #### 2.2.4. Granting code signing app permissions
 
@@ -237,6 +238,8 @@ Make sure the following environment variables are set and use the _tenant id_, _
 	* `AZURE_TENANT_ID`: The Microsoft Entra tenant (directory) ID. Use the value you noted down earlier. Can also be found in Microsoft Entra ID.
 	* `AZURE_CLIENT_ID`: The client (application) ID of an App Registration in the tenant. Use the value you noted down earlier.
 	* `AZURE_CLIENT_SECRET`: A client secret ("value") that was generated for the App Registration. Use the value you noted down earlier.
+
+⚠ Make sure not to confuse the _Secret ID_ (visible in the _Certificates & Secrets_ area where you created the client secret) with the _Application (client) ID_ (visible in the overview page for the app, e.g. codesigning-app), as these will look very similar. The latter is the one you need as _Client ID_. The _Secret ID_ is not used.
 
 In addition, this guide and its scripts below use a few custom environment variables of their own:
 
