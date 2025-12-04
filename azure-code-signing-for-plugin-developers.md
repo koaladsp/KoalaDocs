@@ -101,6 +101,7 @@ We will now create a _code signing app_, for which the credentials will be used 
 * Note down the "Value", this is the secret for later usage with signtool.
 
 💡 _Note down the code signing app client ID and client secret, which we will use later in this guide._
+
 💡 Do not forget that the client secret will expire in a few months or years, depending on what you choose. Take preparations so you can renew the client secret quickly before or on expiration.
 
 #### 2.2.4. Granting code signing app permissions
