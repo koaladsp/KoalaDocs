@@ -270,7 +270,7 @@ C:\sign\Microsoft.Windows.SDK.BuildTools\bin\10.0.26100.0\x64\signtool.exe sign 
 
 Make sure to use the absolute path to `signtool.exe` that you noted down earlier. Also replace the `filetobesigned.exe` with the executable that you want to sign. When you run this, you should immediately see messages involving Azure Trusted Signing, and your signing should be successful.
 
-_⚠ If signtool is not giving you any option, make sure you have installed the .NET runtime! Without this runtime installed, signtool will not work._
+_⚠ If signtool is not giving you any output, make sure you have installed the .NET runtime! Without this runtime installed, signtool will not work._
 
 If you are seeing a list of certificates or an error about no certificates that could be used, you are likely using the _wrong_ version of signtool, possibly one included with an SDK installed on your system. Make sure to only use the signtool that you installed above.
 
