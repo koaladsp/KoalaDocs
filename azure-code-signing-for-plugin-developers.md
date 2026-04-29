@@ -1,6 +1,6 @@
 # Artifact Signing for plugin developers
 
-🌠 Latest update: Feb 19, 2026 by [Cecill Etheredge](https://github.com/ijsf).
+🌠 Latest update: Apr 30, 2026 by [Cecill Etheredge](https://github.com/ijsf).
 
 This guide covers the steps necessary to set up a modern code signing flow using **Artifact Signing** (formerly Azure Trusted Signing) on Microsoft Windows, for example as part of a automated build or CI process. It is primarily meant for developers that are working on audio plugins and apps and covers a few specifics on things such as AAX code signing, PACE wrapped binaries, with the hope that it will be useful for some.
 
@@ -36,15 +36,19 @@ Unlike certificates issued from authorities such as Sectigo, DigiCert and others
 
 In any case, `signtool.exe` automatically and transparently takes care of issuing a new certificates when necessary. In this sense, it is very common to modern non-profit certificate authorities such as [Let's Encrypt](https://letsencrypt.com).
 
-### 2.1. Pricing
+### 2.1. Pricing and sign-up
 
 The [pricing plan of Artifact Signing](https://azure.microsoft.com/en-us/pricing/details/artifact-signing/) is based on a reasonable monthly fee with a maximum quota of signatures per month (e.g. 5000 signatures per month) after which a per-signature cost gets activated. There is also a bigger tier if you require much more signatures per month, e.g. if you're running extensive CI systems or such. Typically the smallest tier will probably work for most independent developers.
 
+First of all, make sure you have [signed up](https://azure.microsoft.com/en-us/pricing/purchase-options/azure-account?icid=artifact-signing&ref=azure.microsoft.com&hasfullconsent=false) for a Microsoft Azure business account.
+
+💡 It is currently understood that you should be a VAT registered business in either the United States, Canada, European Union or United Kingdom (as currently mentioned during the Artifact Signing identity validation), and have access to a credit card for payment. You will also be asked to set up two-factor authentication for extra security during the sign-up process.
+
+After signing up for Microsoft Azure, you should have access to the Artifact Signing Account portal to set up your subscription and account, which we will set up below.
+
 ### 2.2. Setting up Azure Artifact Signing on Microsoft Azure
 
-The following assumes that you have access to the Artifact Signing service in your Microsoft Azure account.
-
-These steps will involve using the Microsoft Azure web portal to configure things. It will only be necessary to configure these things _once_, and you should be good to go afterwards.
+The following steps will involve using the Microsoft Azure web portal to configure things. It will only be necessary to configure these things _once_, and you should be good to go afterwards.
 
 First of all, you will need to look up your tenant id in the Azure Portal:
 
@@ -58,28 +62,34 @@ First of all, you will need to look up your tenant id in the Azure Portal:
 We will start by creating an _Artifact Signing Account_ on Azure.
 
 1. Go to [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts)
-2. Click "Create". Fill in the details, pick one of the following regions:
+2. Click "Create".
+3. Select a _Resource group_. If you do not yet have a Resource group, click "Create New" and think of a suitable name, e.g. related to your company. The resource group will be used by Azure to group resource together, but isn't really relevant here though it is necessary to fill in.
+4. Fill in an _Account name_, e.g. preferably something related to your company.
+5. Select a _Region_ closest to your primary location, and take extra care to note down which region you've selected, e.g.:
 	* East US (https://eus.codesigning.azure.net)
 	* West US (https://wus.codesigning.azure.net)
 	* West Central US (https://wcus.codesigning.azure.net)
 	* West US 2 (https://wus2.codesigning.azure.net)
 	* North Europe (https://neu.codesigning.azure.net)  
 	* West Europe (https://weu.codesigning.azure.net)
+6. Select a _Pricing tier_ that suits your needs. For most cases, a _Basic (9.99 USD/month)_ tier (currently capped at 5000/signatures per month) probably makes sense.
+7. Click the _Review + create_ button.
+8. Azure will now run a final validation. If this succeeds, click the _Create_ button.
 
-💡 _Note down the region, as we will be using this later in this guide._
+This will return you to the Overview page, in which the new Artifact Signing Account will be deployed as a resource. When that is (automatically) completed, continue with the following step.
 
 #### 2.2.2. Granting administrative access
 
 Now that we have a _Artifact Signing Account_, we need to grant your account administrative access in order to access it:
 
-* Click on your Artifact Signing Account in [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts).
+* In [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts), Click on your Artifact Signing Account resource (which has the Account name you've entered earlier) to open and access the resource.
 * Go to "Access control (IAM)" (left menu).
 * Click "Add" and "Add role assignment" (top).
-* Search for "Artifact Signing Identity Verifier" (job function roles). Next.
-* Type in and select your current user account.
+* Search for "Artifact Signing Identity Verifier" (job function roles). Click it in the list so it highlights up, and click the Next button below.
+* Click _Select members_, select your account in the list that opens up, and click the _Select_ button.
 * Keep clicking "Review + assign" until done.
 
-Your account should now have administrative access to Artifact Signing.
+Your Azure account should now have the necessary administrative access rights to your Artifact Signing Account. You can optionally verify that by clicking the _View my access_ button: in the list that opens up the "Artifact Signing Identity Verifier" should be visible.
 
 #### 2.2.3. Create a code signing app
 
@@ -87,16 +97,14 @@ We will now create a _code signing app_, for which the credentials will be used 
 
 * In the Azure portal, go to or search for [Microsoft Entra ID](https://portal.azure.com/#view/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/~/Overview).
 * Click "Add" and "App registration" (top).
-* Name: codesigning-app (or anything else)
-* Who can use this application or access this API?: Accounts in this organizational directory only (Default Directory only - Single tenant)
-* Redirect URI: (leave as is)
-* Click "Register".
+* Name: `codesigning-app` (or something else)
+* Leave all settings as-is and click "Register".
 * Click on the app resource you've just created.
 * Note down the "Application (client) ID" for later usage with signtool.
-* Go to "Certificates & secrets" (left menu).
-* Click "Client secrets" (top).
+* In the left menu under "Manage", go to "Certificates & secrets".
+* Click "Client secrets".
 * Click "New client secret".
-* Set "Expires" to the highest date possible.
+* Set "Expires" to your liking, e.g. the longest expiration or highest date possible.
 * Click "Add".
 * Note down the "Value", this is the secret for later usage with signtool.
 
@@ -108,12 +116,12 @@ We will now create a _code signing app_, for which the credentials will be used 
 
 We will now grant Artifact Signing permissions to our code signing app:
 
-* Click on your Artifact Signing Account in [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts).
+* In [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts), Click on your Artifact Signing Account resource (which has the Account name you've entered earlier) to open and access the resource.
 * Go to "Access control (IAM)" (left menu).
 * Click "Add" and "Add role assignment" (top).
-* Select "Artifact Signing Certificate Profile Signer". Next.
-* Leave "User, Group or Service principal" selected. Click on "+ Select Members".
-* Type in and select your app name (e.g. codesigning-app).
+* Search for "Artifact Signing Certificate Profile Signer" (job function roles). Click it in the list so it highlights up, and click the Next button below.
+* Click _Select members_.
+* Type in and select your app name (e.g. `codesigning-app`). Note that your app likely won't be visible by default unless you search for it due to the user hostile UI here. Take care not to accidentally pick your Azure account, which is visible by default, and search for your app instead! Finally, click the _Select_ button.
 * Keep clicking "Review + assign" until done.
 
 #### 2.2.5. Verify identity
@@ -124,18 +132,23 @@ _One very important requirement for this is that your personal or company identi
 
 If you have not _validated_ yet, proceed as follows:
 
-* Click on your Artifact Signing Account in [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts).
+* In [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts), Click on your Artifact Signing Account resource (which has the Account name you've entered earlier) to open and access the resource.
 * Go to "Objects" -> "Identity validation" (left menu).
-* Click "New" and "Public Trust" (top).
-* Fill in the details. Note that Primary and Secondary E-mail(s) will not be published in any certificate. You may need a DUNS number as well.
+* Click "New" and "Public" (top).
+* Fill in the details. Note that Primary and Secondary E-mail(s) will not be published in any certificate, according to the Azure documentation. You will likely need a Tax Id, DUNS number or Registered Business Number in order to process.
+* Review the terms and accept them if you wish.
 
-Your mileage may vary, but expect the validation to take at least a day to be confirmed as it is a one-time verification that concerns your Microsoft Azure account.
+You will now return to the Identity Validations page, and your validation should show "In Progress" under Status. Your mileage may vary, but expect the validation to take at least a day to be confirmed as it is a one-time verification that concerns your Microsoft Azure account.
+
+Note that your identity validation has an expiration, e.g. of one or more years and will need to be redone occassionally. It is expected that once you have gone through the initial validation as a registered business, any subsequent validations should take much less effort hopefully.
+
+After your identity has been validated, continue with the steps below.
 
 #### 2.2.6. Create certificate profile
 
 We now need to create a _certificate profile_, which we can use for code signing to issue new certificates:
 
-* Click on your Artifact Signing Account in [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts).
+* In [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts), Click on your Artifact Signing Account resource (which has the Account name you've entered earlier) to open and access the resource.
 * Go to "Objects" -> "Certificate profiles" (left menu).
 * Click "Create" and "Public Trust" (top).
 * Fill in a name and select the "Verified CN and O" appropriately (will appear when the identity validation process is done).
