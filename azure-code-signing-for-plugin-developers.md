@@ -44,6 +44,8 @@ First of all, make sure you have [signed up](https://azure.microsoft.com/en-us/p
 
 💡 It is currently understood that you should be a VAT registered business in either the United States, Canada, European Union or United Kingdom (as currently mentioned during the Artifact Signing identity validation), and have access to a credit card for payment. You will also be asked to set up two-factor authentication for extra security during the sign-up process.
 
+💡 At this time, during the Identity Validation of your business, it seems necessary to provide validation of your personal identity card or passport using the Microsoft Authenticator phone app and/or through a affiliate known as [AU10TIX](https://learn.microsoft.com/en-us/entra/verified-id/idv-partners) though this likely varies based on your location. Steps on how to set this up will be provided by Azure when this is asked.
+
 After signing up for Microsoft Azure, you should have access to the Artifact Signing Account portal to set up your subscription and account, which we will set up below.
 
 ### 2.2. Setting up Azure Artifact Signing on Microsoft Azure
@@ -140,7 +142,11 @@ If you have not _validated_ yet, proceed as follows:
 
 You will now return to the Identity Validations page, and your validation should show "In Progress" under Status. Your mileage may vary, but expect the validation to take at least a day to be confirmed as it is a one-time verification that concerns your Microsoft Azure account.
 
-Note that your identity validation has an expiration, e.g. of one or more years and will need to be redone occassionally. It is expected that once you have gone through the initial validation as a registered business, any subsequent validations should take much less effort hopefully.
+In addition, you will probably receive an e-mail out of the blue asking you to complete your Artifact Signing identity validation using a "verified authenticator". This basically comes down to using a phone with Microsoft Authenticator and/or one of Microsoft's affiliated identity verification partner apps. In case you have a rooted phone or custom ROM: it will not work as these apps are walled-garden crippleware, so use a stock phone.
+
+You'll likely end up scanning your personal identification or passport and providing a face photo in order to complete the process. This whole process feels like patchwork, so don't expect Azure to notice you've completed the verification for a couple of hours. Leave it alone for a while.
+
+Note that your identity validation also has an expiration, e.g. of one or more years and will need to be redone occassionally. It is expected that once you have gone through the initial validation as a registered business, any subsequent validations should ideally take much less effort.
 
 After your identity has been validated, continue with the steps below.
 
