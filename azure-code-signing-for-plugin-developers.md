@@ -137,7 +137,9 @@ If you have not _validated_ yet, proceed as follows:
 * In [Artifact Signing Accounts](https://ms.portal.azure.com/#browse/Microsoft.CodeSigning%2Fcodesigningaccounts), Click on your Artifact Signing Account resource (which has the Account name you've entered earlier) to open and access the resource.
 * Go to "Objects" -> "Identity validation" (left menu).
 * Click "New" and "Public" (top).
-* Fill in the details. Note that Primary and Secondary E-mail(s) will not be published in any certificate, according to the Azure documentation. You will likely need a Tax Id, DUNS number or Registered Business Number in order to process.
+* Fill in the details.
+* As for the Primary and Secondary E-mail(s), make sure not to use a generic e-mail address as these may be rejected. Prefer a custom domain name that is owned by you or your business. The e-mail addresses will not be published in any certificate according to the Azure documentation.
+* You will likely need a Tax Id, DUNS number or Registered Business Number in order to proceed.
 * Review the terms and accept them if you wish.
 
 You will now return to the Identity Validations page, and your validation should show "In Progress" under Status. Your mileage may vary, but expect the validation to take at least a day to be confirmed as it is a one-time verification that concerns your Microsoft Azure account.
