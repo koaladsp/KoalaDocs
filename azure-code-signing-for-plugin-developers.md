@@ -144,9 +144,11 @@ You will now return to the Identity Validations page, and your validation should
 
 In addition, you will probably receive an e-mail out of the blue asking you to complete your Artifact Signing identity validation using a "verified authenticator". This basically comes down to using a phone with Microsoft Authenticator and/or one of Microsoft's affiliated identity verification partner apps. In case you have a rooted phone or custom ROM: it will not work as these apps are walled-garden crippleware, so use a stock phone.
 
-You'll likely end up scanning your personal identification or passport and providing a face photo in order to complete the process. This whole process feels like patchwork, so don't expect Azure to notice you've completed the verification for a couple of hours. Leave it alone for a while.
+You'll likely end up scanning your personal identification or passport and providing a face photo in order to complete the process. This whole process feels like patchwork, so don't expect Azure to notice you've completed the verification immediately.
 
-Note that your identity validation also has an expiration, e.g. of one or more years and will need to be redone occassionally. It is expected that once you have gone through the initial validation as a registered business, any subsequent validations should ideally take much less effort.
+Leave it alone for a bit but keep on the lookout for any additional e-mails to verify something. You may be asked to verify the e-mail addresses you have entered before the identity validation process completes successfully.
+
+Note that your identity validation also has an expiration, one or more years and will therefore need to be redone occassionally. It is expected that once you have gone through the initial validation as a registered business, any subsequent validations should ideally take much less effort.
 
 After your identity has been validated, continue with the steps below.
 
